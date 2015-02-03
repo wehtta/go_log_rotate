@@ -5,6 +5,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	// "github.com/Sirupsen/logrus/hooks/airbrake"
 	"os"
+	"time"
 )
 
 type Logger logrus.Logger
@@ -15,37 +16,52 @@ type Log4Go struct {
 }
 
 func (logger *Log4Go) Info(args ...interface{}) {
-	logger.LoggerConsole.Info(args)
+	now := time.Now()
+	logger.LoggerConsole.WithFields(logrus.Fields{
+		"time": now,
+	}).Info(args)
 }
 
 // error should be output to both file and console
 func (logger *Log4Go) Error(args ...interface{}) {
-	logger.LoggerConsole.Error(args)
-	logger.LoggerFile.Error(args)
+	now := time.Now()
+	logger.LoggerConsole.WithFields(logrus.Fields{
+		"time": now,
+	}).Error(args)
+
+	logger.LoggerFile.WithFields(logrus.Fields{
+		"time": now,
+	}).Error(args)
 }
 
 var logger Log4Go
-
-// var logfile *os.File
+var LogFile *os.File
 
 func init() {
-	logfile, err := os.OpenFile("./error.log", os.O_APPEND|os.O_WRONLY, 0600)
+	defer func() {
+		err := recover()
+		if err != nil {
+			fmt.Println(err)
+		}
+	}()
+
+	logfile, err := os.OpenFile("./error.log", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+
 	if err != nil {
 		panic(err)
 	}
 
-	var LoggerConsole = logrus.New()
-	LoggerConsole.Out = os.Stdout
-	LoggerConsole.Level = logrus.DebugLevel
-
-	var LoggerFile = logrus.New()
-	LoggerFile.Out = logfile
-	LoggerFile.Level = logrus.DebugLevel
-
+	LogFile = logfile
 	logger = Log4Go{
-		LoggerConsole,
-		LoggerFile,
+		LoggerConsole: logrus.New(),
+		LoggerFile:    logrus.New(),
 	}
+
+	logger.LoggerConsole.Out = os.Stdout
+	logger.LoggerConsole.Level = logrus.DebugLevel
+
+	logger.LoggerFile.Out = logfile
+	logger.LoggerFile.Level = logrus.DebugLevel
 }
 
 func main() {
