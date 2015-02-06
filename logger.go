@@ -16,21 +16,19 @@ type Log4Go struct {
 }
 
 func (logger *Log4Go) Info(args ...interface{}) {
-	now := time.Now()
 	logger.LoggerConsole.WithFields(logrus.Fields{
-		"time": now,
+		"time": time.Now(),
 	}).Info(args)
 }
 
 // error should be output to both file and console
 func (logger *Log4Go) Error(args ...interface{}) {
-	now := time.Now()
 	logger.LoggerConsole.WithFields(logrus.Fields{
-		"time": now,
+		"time": time.Now(),
 	}).Error(args)
 
 	logger.LoggerFile.WithFields(logrus.Fields{
-		"time": now,
+		"time": time.Now(),
 	}).Error(args)
 }
 
