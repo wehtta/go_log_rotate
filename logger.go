@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/Sirupsen/logrus"
-	// "github.com/Sirupsen/logrus/hooks/airbrake"
+	"gopkg.in/natefinch/lumberjack.v2"
 	"os"
 	"time"
 )
@@ -33,7 +33,8 @@ func (logger *Log4Go) Error(args ...interface{}) {
 }
 
 var logger Log4Go
-var LogFile *os.File
+
+// var LogFile *os.File
 
 func init() {
 	defer func() {
@@ -43,13 +44,6 @@ func init() {
 		}
 	}()
 
-	logfile, err := os.OpenFile("./error.log", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
-
-	if err != nil {
-		panic(err)
-	}
-
-	LogFile = logfile
 	logger = Log4Go{
 		LoggerConsole: logrus.New(),
 		LoggerFile:    logrus.New(),
@@ -58,7 +52,13 @@ func init() {
 	logger.LoggerConsole.Out = os.Stdout
 	logger.LoggerConsole.Level = logrus.DebugLevel
 
-	logger.LoggerFile.Out = logfile
+	logger.LoggerFile.Out = &lumberjack.Logger{
+		Filename:   "./error.log",
+		MaxSize:    10, // megabytes
+		MaxBackups: 7,
+		MaxAge:     2, //days
+	}
+
 	logger.LoggerFile.Level = logrus.DebugLevel
 }
 
